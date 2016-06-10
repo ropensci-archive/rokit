@@ -1,8 +1,7 @@
 require 'octokit'
-require_relative 'utils'
 require_relative 'array_methods'
 
-client = Octokit::Client.new(:access_token => ENV["GITHUB_TOKEN_ROAPI"])
+@client = Octokit::Client.new(:access_token => ENV["GITHUB_TOKEN_ROAPI"])
 
 repos = (1..4).map { |x| client.repos('ropenscilabs', :page => x) }.flatten
 names = repos.map(&:name)
@@ -27,9 +26,16 @@ end
 
 # those repos without slack hooks
 dat.without_slack
+dat.without_slack.map { |z| z['pkg'] }
 
 # those repos without travis hooks
 dat.without_travis
 
 # those repos without codecov hooks
 dat.without_codecov
+
+# create hooks
+pkgs = dat.without_slack.map { |z| z['pkg'] }
+pkgs = pkgs.select { |x| x.match(/tutorial|test/).nil? }
+hooks = pkgs[9..pkgs.length].map { |z| create_hook_slack('ropenscilabs/' + z) }
+create_hook_slack('ropenscilabs/' + pkgs[2])
